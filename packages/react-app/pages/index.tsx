@@ -1,22 +1,68 @@
 import { useEffect, useState } from "react";
-import { createPublicClient, createWalletClient, custom, formatEther, formatGwei, formatUnits, parseEther } from "viem";
-import { celoAlfajores } from "viem/chains";
 import { useAccount } from "wagmi";
-import ERC20ABI from "../abis/ERC20ABI.json";
-import AggregatorV3InterfaceABI from "../abis/aggregatorV3InterfaceABI.json";
+import { createPublicClient, custom, erc20Abi, formatEther, formatUnits } from "viem";
+import { celoAlfajores } from "viem/chains";
+
 
 
 export default function Home() {
     const CELOTokenAddress = "0xF194afDf50B03e69Bd7D057c1Aa9e10c9954E4C9"; // CELO Testnet
-    const celoToUsd = "0x022F9dCC73C5Fb43F2b4eF2EF9ad3eDD1D853946"; // Price Feed Contract Address. You can find it here: https://docs.chain.link/data-feeds/price-feeds/addresses?network=celo&page=1#overview
-
-        // get the user address using wagmi
-    const { address, isConnected } = useAccount();
+    const celoToUsd = "0x022F9dCC73C5Fb43F2b4eF2EF9ad3eDD1D853946";
+    const aggregatorV3InterfaceABI = [
+        {
+          inputs: [],
+          name: "decimals",
+          outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "description",
+          outputs: [{ internalType: "string", name: "", type: "string" }],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [{ internalType: "uint80", name: "_roundId", type: "uint80" }],
+          name: "getRoundData",
+          outputs: [
+            { internalType: "uint80", name: "roundId", type: "uint80" },
+            { internalType: "int256", name: "answer", type: "int256" },
+            { internalType: "uint256", name: "startedAt", type: "uint256" },
+            { internalType: "uint256", name: "updatedAt", type: "uint256" },
+            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "latestRoundData",
+          outputs: [
+            { internalType: "uint80", name: "roundId", type: "uint80" },
+            { internalType: "int256", name: "answer", type: "int256" },
+            { internalType: "uint256", name: "startedAt", type: "uint256" },
+            { internalType: "uint256", name: "updatedAt", type: "uint256" },
+            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "version",
+          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ]
     const [userAddress, setUserAddress] = useState("");
     const [isMounted, setIsMounted] = useState(false);
     const [celoBalance, setCeloBalance ]  = useState("");
     const [celoValue, setCeloValue ]  = useState("");
 
+    const { address, isConnected } = useAccount();
 
     useEffect(() => {
         setIsMounted(true);
@@ -24,25 +70,25 @@ export default function Home() {
 
     useEffect(() => {
         if (isConnected && address) {
-             // set the user address when a wallet is connected
             setUserAddress(address);
+
+            if(isMounted){
+                getBalance();
+                getUSDValue()
+            }
         }
-    }, [address, isConnected]);
+    }, [address, isConnected, isMounted]);
 
 
-    useEffect(() => {
-        if (isMounted) {
-            getBalance();
-            getUSDValue()
-        }
-    }, [isMounted]);
 
     if (!isMounted) {
         return null;
     }
 
 
+
     const getBalance = async () => {
+        // create a public client on Alfajores
         let publicClient = createPublicClient({
             transport: custom(window.ethereum),
             chain: celoAlfajores,
@@ -50,17 +96,16 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: CELOTokenAddress,
-            abi: ERC20ABI,
+            abi: erc20Abi,
             functionName: "balanceOf",
-            args: [address],
+            args: [userAddress as `0x${string}`],
         }) as any;
         
+        console.log(response);
         const balance = Number(formatEther(response)).toFixed(2)
         setCeloBalance((balance))
         return ((balance));
     };
- 
-
 
     const getUSDValue = async () => {
         let publicClient = createPublicClient({
@@ -70,15 +115,18 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: celoToUsd,
-            abi: AggregatorV3InterfaceABI,
+            abi: aggregatorV3InterfaceABI,
             functionName: "latestRoundData",
             args: [],
         }) as any;
+   
 
         const balance = Number(formatUnits(response[1], 8)).toFixed(2)
         setCeloValue(balance)
         return (balance);
     };
+
+  
 
 
     return (
@@ -89,13 +137,10 @@ export default function Home() {
             {isConnected ? (
                 <div className="h2 text-center">
                     Your address: {userAddress}
-
-                   <br />
-                   <br />
-                   <br />
-                    <p>CELO Balance {celoBalance}</p>
-                    <p>Balance in USD {Number(celoValue) * Number(celoBalance)}</p>
+                    <p> CELO Balance {celoBalance}</p>
+                    <p> USD value of CELO {Number(celoBalance) * Number(celoValue)}</p>
                 </div>
+
             ) : (
                 <div>No Wallet Connected</div>
             )}

@@ -40,13 +40,13 @@ For that we will need to get the address of CELO on Alfajores. You can find the 
 
 ```
 
-1. Create an `abis` folder and add an ERC20 abi. You can find a template through ChatGPT.
+1. Import an eRC20 abi form viem
 2. Create a [public client ](https://viem.sh/docs/clients/public)
 3. Use viems [readContract](https://viem.sh/docs/contract/readContract) function to read the balance
 
 ```typescript
 // ERC20 abi 
-import ERC20ABI from "../abis/ERC20ABI.json";
+import { erc20Abi } from "viem";
 
 export default function Home() {
     // CELO token address on Alfajore Celo Testnet
@@ -63,9 +63,9 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: CELOTokenAddress,
-            abi: ERC20ABI,
+            abi: erc20Abi,
             functionName: "balanceOf",
-            args: [address],
+            args: [userAddress as `0x${string}`],
         }) as any;
         
         const balance = Number(formatEther(response)).toFixed(2)
@@ -77,16 +77,18 @@ export default function Home() {
 
 ## Get USD value of CELO tokens
 
-1. In the `abis` folder and add an the AggregatorV3InterfaceABI  abi. 
+1. In the `abis` folder and add an the aggregatorV3InterfaceABI  abi. 
 2. Find the address of the CELO/USD pricefeed in the [Chainlink docs ](https://docs.chain.link/data-feeds/price-feeds/addresses?network=celo&page=1#overview)
 3. Use viems [readContract](https://viem.sh/docs/contract/readContract) function to get the curren price of CELO in USD
 
 
 ```typescript
-import AggregatorV3InterfaceABI from "../abis/aggregatorV3InterfaceABI.json";
+import aggregatorV3InterfaceABI from "../abis/aggregatorV3InterfaceABI.json";
 
 export default function Home() {
     const celoToUsd = "0x022F9dCC73C5Fb43F2b4eF2EF9ad3eDD1D853946"; // Price Feed Contract Address. You can find it here: https://docs.chain.link/data-feeds/price-feeds/addresses?network=celo&page=1#overview
+
+    const [celoValue, setCeloValue ]  = useState("");
 
     const getUSDValue = async () => {
         let publicClient = createPublicClient({
@@ -96,7 +98,7 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: celoToUsd,
-            abi: AggregatorV3InterfaceABI,
+            abi: aggregatorV3InterfaceABI,
             functionName: "latestRoundData",
             args: [],
         }) as any;
@@ -116,8 +118,8 @@ import { useEffect, useState } from "react";
 import { createPublicClient, createWalletClient, custom, formatEther, formatGwei, formatUnits, parseEther } from "viem";
 import { celoAlfajores } from "viem/chains";
 import { useAccount } from "wagmi";
-import ERC20ABI from "../abis/ERC20ABI.json";
-import AggregatorV3InterfaceABI from "../abis/aggregatorV3InterfaceABI.json";
+import erc20Abi from "../abis/erc20Abi.json";
+import aggregatorV3InterfaceABI from "../abis/aggregatorV3InterfaceABI.json";
 
 
 export default function Home() {
@@ -164,7 +166,7 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: CELOTokenAddress,
-            abi: ERC20ABI,
+            abi: erc20Abi,
             functionName: "balanceOf",
             args: [address],
         }) as any;
@@ -184,7 +186,7 @@ export default function Home() {
 
         const response = await publicClient.readContract({
             address: celoToUsd,
-            abi: AggregatorV3InterfaceABI,
+            abi: aggregatorV3InterfaceABI,
             functionName: "latestRoundData",
             args: [],
         }) as any;
