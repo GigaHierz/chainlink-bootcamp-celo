@@ -13,13 +13,15 @@
         "@heroicons/react": "^2.0.18",
         "@rainbow-me/rainbowkit": "^2.0.2",
         "@tanstack/react-query": "^5.28.6",
+        "@types/web3": "^1.2.2",
         "@wagmi/connectors": "4.1.18",
         "ethers": "^5.7.2",
         "next": "^13.4.2",
         "react": "18.2.0",
         "react-dom": "18.2.0",
         "viem": "2.8.18",
-        "wagmi": "2.5.12"
+        "wagmi": "2.5.12",
+        "web3": "4.8.0"
     },
     "devDependencies": {
         "@types/node": "^20.2.1",

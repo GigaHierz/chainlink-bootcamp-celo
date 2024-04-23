@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { createPublicClient, custom, erc20Abi, formatEther, formatUnits } from "viem";
 import { celoAlfajores } from "viem/chains";
+import Web3 from "web3";
 
 
 
@@ -10,57 +11,61 @@ export default function Home() {
     const celoToUsd = "0x022F9dCC73C5Fb43F2b4eF2EF9ad3eDD1D853946";
     const aggregatorV3InterfaceABI = [
         {
-          inputs: [],
-          name: "decimals",
-          outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
-          stateMutability: "view",
-          type: "function",
+            inputs: [],
+            name: "decimals",
+            outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+            stateMutability: "view",
+            type: "function",
         },
         {
-          inputs: [],
-          name: "description",
-          outputs: [{ internalType: "string", name: "", type: "string" }],
-          stateMutability: "view",
-          type: "function",
+            inputs: [],
+            name: "description",
+            outputs: [{ internalType: "string", name: "", type: "string" }],
+            stateMutability: "view",
+            type: "function",
         },
         {
-          inputs: [{ internalType: "uint80", name: "_roundId", type: "uint80" }],
-          name: "getRoundData",
-          outputs: [
-            { internalType: "uint80", name: "roundId", type: "uint80" },
-            { internalType: "int256", name: "answer", type: "int256" },
-            { internalType: "uint256", name: "startedAt", type: "uint256" },
-            { internalType: "uint256", name: "updatedAt", type: "uint256" },
-            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
-          ],
-          stateMutability: "view",
-          type: "function",
+            inputs: [{ internalType: "uint80", name: "_roundId", type: "uint80" }],
+            name: "getRoundData",
+            outputs: [
+                { internalType: "uint80", name: "roundId", type: "uint80" },
+                { internalType: "int256", name: "answer", type: "int256" },
+                { internalType: "uint256", name: "startedAt", type: "uint256" },
+                { internalType: "uint256", name: "updatedAt", type: "uint256" },
+                { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+            ],
+            stateMutability: "view",
+            type: "function",
         },
         {
-          inputs: [],
-          name: "latestRoundData",
-          outputs: [
-            { internalType: "uint80", name: "roundId", type: "uint80" },
-            { internalType: "int256", name: "answer", type: "int256" },
-            { internalType: "uint256", name: "startedAt", type: "uint256" },
-            { internalType: "uint256", name: "updatedAt", type: "uint256" },
-            { internalType: "uint80", name: "answeredInRound", type: "uint80" },
-          ],
-          stateMutability: "view",
-          type: "function",
+            inputs: [],
+            name: "latestRoundData",
+            outputs: [
+                { internalType: "uint80", name: "roundId", type: "uint80" },
+                { internalType: "int256", name: "answer", type: "int256" },
+                { internalType: "uint256", name: "startedAt", type: "uint256" },
+                { internalType: "uint256", name: "updatedAt", type: "uint256" },
+                { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+            ],
+            stateMutability: "view",
+            type: "function",
         },
         {
-          inputs: [],
-          name: "version",
-          outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-          stateMutability: "view",
-          type: "function",
+            inputs: [],
+            name: "version",
+            outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+            stateMutability: "view",
+            type: "function",
         },
-      ]
+    ]
+    const web3 = new Web3("https://alfajores-forno.celo-testnet.org")
+    const priceFeed = new web3.eth.Contract(aggregatorV3InterfaceABI, celoToUsd)
+    const celoContract = new web3.eth.Contract(erc20Abi, CELOTokenAddress)
+
     const [userAddress, setUserAddress] = useState("");
     const [isMounted, setIsMounted] = useState(false);
-    const [celoBalance, setCeloBalance ]  = useState("");
-    const [celoValue, setCeloValue ]  = useState("");
+    const [celoBalance, setCeloBalance] = useState("");
+    const [celoValue, setCeloValue] = useState("");
 
     const { address, isConnected } = useAccount();
 
@@ -72,7 +77,7 @@ export default function Home() {
         if (isConnected && address) {
             setUserAddress(address);
 
-            if(isMounted){
+            if (isMounted) {
                 getBalance();
                 getUSDValue()
             }
@@ -88,45 +93,40 @@ export default function Home() {
 
 
     const getBalance = async () => {
-        // create a public client on Alfajores
-        let publicClient = createPublicClient({
-            transport: custom(window.ethereum),
-            chain: celoAlfajores,
-        });
+        let response = ''
 
-        const response = await publicClient.readContract({
-            address: CELOTokenAddress,
-            abi: erc20Abi,
-            functionName: "balanceOf",
-            args: [userAddress as `0x${string}`],
-        }) as any;
-        
-        console.log(response);
-        const balance = Number(formatEther(response)).toFixed(2)
-        setCeloBalance((balance))
-        return ((balance));
+        celoContract.methods.balanceOf(userAddress as `0x${string}`).call()
+            .then(balance => {
+                // Balance is returned in Wei, convert it to Ether (or token's equivalent)
+                const tokenBalance = web3.utils.fromWei(balance, 'ether');
+                response = tokenBalance
+                setCeloBalance((response))
+                console.log(`The balance is: ${tokenBalance}`);
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        return;
     };
 
     const getUSDValue = async () => {
-        let publicClient = createPublicClient({
-            transport: custom(window.ethereum),
-            chain: celoAlfajores,
-        });
+        let response = {} as any
+        await priceFeed.methods
+            .latestRoundData()
+            .call()
+            .then((roundData: any) => {
+                // Do something with roundData
+                response = roundData;
+                console.log("Latest Round Data", roundData)
+            })
 
-        const response = await publicClient.readContract({
-            address: celoToUsd,
-            abi: aggregatorV3InterfaceABI,
-            functionName: "latestRoundData",
-            args: [],
-        }) as any;
-   
-
-        const balance = Number(formatUnits(response[1], 8)).toFixed(2)
+        const balance = (formatUnits(response[1], 8))
         setCeloValue(balance)
-        return (balance);
+        return;
     };
 
-  
+
 
 
     return (
@@ -137,8 +137,8 @@ export default function Home() {
             {isConnected ? (
                 <div className="h2 text-center">
                     Your address: {userAddress}
-                    <p> CELO Balance {celoBalance}</p>
-                    <p> USD value of CELO {Number(celoBalance) * Number(celoValue)}</p>
+                    <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
+                    <p> USD value of CELO {(Number(celoBalance) * Number(celoValue)).toFixed(2)}</p>
                 </div>
 
             ) : (
