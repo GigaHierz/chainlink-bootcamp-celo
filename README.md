@@ -18,7 +18,7 @@ npx @celo/celo-composer@latest create
 run
 
 ```bash
-npm I
+npm i
 ```
 
 or 
@@ -37,23 +37,38 @@ First we want to read the balance of CELO tokens.
 
 
 
-1. For that we will need to get the address of CELO on Alfajores. You can find the addresses in the [Celo docs](https://docs.celo.org/token-addresses).
+1. For that we will need to get the address of CELO on Alfajores. You can find the addresses in the [Celo docs](https://docs.celo.org/token-addresses). Or when you check top ERC20 tokens in the [celoscan](https://celoscan.io/tokens).
 
 ```typescript
     const CELOTokenAddress = "0xF194afDf50B03e69Bd7D057c1Aa9e10c9954E4C9"; // CELO Testnet
 
 ```
 
-2. Import an eRC20 abi from viem
+2. Import an ERC20 abi from viem
 ```typescript
  //  Import an eRC20 abi from viem
     import { erc20Abi } from "viem";
 ```
 
 3. we will use [web3.js](https://web3js.org/) to read from the contracts. so, we need to create an instance, initialize it with the RPC for Celo Alfajores.
+
+Install web.js
+
+```bash
+yarn add web3
+```
+
+Import Web3.js
+
+
 ```typescript
-    // create a Web3 instance, initialize it with the RPC for Celo Alfajores
-    const web3 = new Web3("https://alfajores-forno.celo-testnet.org")
+ 
+```
+
+Create the web3 instance. You will need an RPC. You can find the Celo RPCs in the [Celo docs](https://docs.celo.org/network)
+
+```typescript
+    import Web3 from "web3";
 ```
 
 
@@ -84,6 +99,46 @@ First we want to read the balance of CELO tokens.
     };
 ```
 
+6. Call the function in a react hook above. The hook already exists and we add out code
+
+```typescript
+    useEffect(() => {
+        if (isConnected && address) {
+            setUserAddress(address);
+
+            // add this code, as we only want to load the user balance, once we are connected and the component is mounted.
+            if (isMounted) {
+                getBalance();
+            }
+        }
+        // isMounted needs to be added here as well
+    }, [address, isConnected, isMounted]);
+```
+
+7. Add some code to the HTML to show the users current amount of CELO tokens
+
+```typescript
+    return (
+        <div className="flex flex-col justify-center items-center">
+            <div className="h1">
+                There you go... a canvas for your next Celo project!
+            </div>
+            {isConnected ? (
+                <div className="h2 text-center">
+                    Your address: {userAddress}
+
+                    {/* add your values here, we will shorten it to two decimal values */}
+                    <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
+                
+                </div>
+
+            ) : (
+                <div>No Wallet Connected</div>
+            )}
+        </div>
+    );
+```
+
 
 Your code should now look likes this: 
 
@@ -100,8 +155,28 @@ export default function Home() {
     const web3 = new Web3("https://alfajores-forno.celo-testnet.org")
     const celoContract = new web3.eth.Contract(erc20Abi, CELOTokenAddress)
 
+    const [userAddress, setUserAddress] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
     // create a state for the celoBalance
     const [celoBalance, setCeloBalance ]  = useState("");
+
+      useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (isConnected && address) {
+            setUserAddress(address);
+
+            if (isMounted) {
+                getBalance();
+            }
+        }
+    }, [address, isConnected, isMounted]);
+
+    if (!isMounted) {
+        return null;
+    }
 
     const getBalance = async () => {
           celoContract.methods.balanceOf(userAddress as `0x${string}`).call()
@@ -117,6 +192,24 @@ export default function Home() {
 
         return;
     };
+
+        return (
+        <div className="flex flex-col justify-center items-center">
+            <div className="h1">
+                There you go... a canvas for your next Celo project!
+            </div>
+            {isConnected ? (
+                <div className="h2 text-center">
+                    Your address: {userAddress}
+                    {/* add your values here, we will shorten it to two decimal values */}
+                    <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
+                </div>
+
+            ) : (
+                <div>No Wallet Connected</div>
+            )}
+        </div>
+    );
 }
 ```
 
@@ -203,12 +296,17 @@ For this tutorial we will follow the guide from the [Chainlink docs](https://doc
     4: answeredInRound
 ```
 
-This is the function to call the price feed data
+First again let's add the state to store our celoValue
 
 ```typescript
-    // store the celoValue in the state
+   // store the celoValue in the state
     const [celoValue, setCeloValue] = useState("");
+```
 
+Then the function to call the price feed data
+
+
+```typescript
     const getUSDValue = async () => {
     priceFeed.methods
         .latestRoundData()
@@ -223,6 +321,45 @@ This is the function to call the price feed data
     };
 
 ```
+
+Call the function in our hook, when the dApp is connected with a wallet and the component is mounted
+
+```typescript
+    useEffect(() => {
+        if (isConnected && address) {
+            setUserAddress(address);
+            if (isMounted) {
+                getBalance();
+                getUSDValue()
+            }
+        }
+    }, [address, isConnected, isMounted]);
+```
+
+Add some code to display the celoValue to the user
+
+```typescript
+    return (
+        <div className="flex flex-col justify-center items-center">
+            <div className="h1">
+                There you go... a canvas for your next Celo project!
+            </div>
+            {isConnected ? (
+                <div className="h2 text-center">
+                    Your address: {userAddress}
+                     {/* add your values here, we will shorten it to two decimal values */}
+                    <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
+                    <p> USD value of CELO {(Number(celoBalance) * Number(celoValue)).toFixed(2)}</p>
+                </div>
+            ) : (
+                <div>No Wallet Connected</div>
+            )}
+        </div>
+    );
+```
+
+Now your code should look like this
+
 
 ```typescript
 export default function Home() {
@@ -246,20 +383,21 @@ export default function Home() {
 
 ## Final code
 
-Let's add some code to showcase the values to the user. Your whole code should look like this now. 
+Let's add some code to showcase the values to the user. Your whole code should look like this now. And we are done. Congratulations. You now know how to implement price feed data into your dApp. 
 
 ```typescript
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { createPublicClient, custom, erc20Abi, formatEther, formatUnits } from "viem";
-import { celoAlfajores } from "viem/chains";
+//  Import an eRC20 abi from viem
+import { erc20Abi, formatUnits } from "viem";
 import Web3 from "web3";
-
-
 
 export default function Home() {
     const CELOTokenAddress = "0xF194afDf50B03e69Bd7D057c1Aa9e10c9954E4C9"; // CELO Testnet
+    // pricefeed address for CELO/USD on Alfajores
     const celoToUsd = "0x022F9dCC73C5Fb43F2b4eF2EF9ad3eDD1D853946";
+    // create a Web3 instance, initialize it with the RPC for Celo Alfajores
+    // pricefeed address for CELO/USD on Alfajores
     const aggregatorV3InterfaceABI = [
         {
             inputs: [],
@@ -311,11 +449,15 @@ export default function Home() {
     ]
     const web3 = new Web3("https://alfajores-forno.celo-testnet.org")
     const celoContract = new web3.eth.Contract(erc20Abi, CELOTokenAddress)
+    // contract instance of the price feed contract
     const priceFeed = new web3.eth.Contract(aggregatorV3InterfaceABI, celoToUsd)
+
 
     const [userAddress, setUserAddress] = useState("");
     const [isMounted, setIsMounted] = useState(false);
+    // save the balance value in the state
     const [celoBalance, setCeloBalance] = useState("");
+    // store the celoValue in the state
     const [celoValue, setCeloValue] = useState("");
 
     const { address, isConnected } = useAccount();
@@ -327,7 +469,6 @@ export default function Home() {
     useEffect(() => {
         if (isConnected && address) {
             setUserAddress(address);
-
             if (isMounted) {
                 getBalance();
                 getUSDValue()
@@ -350,6 +491,8 @@ export default function Home() {
             .catch(error => {
                 console.error(error);
             });
+
+        return;
     };
 
     const getUSDValue = async () => {
@@ -357,6 +500,7 @@ export default function Home() {
             .latestRoundData()
             .call()
             .then((roundData: any) => {
+                // get the value from position one of the response object. The value will come back as bigInt so we will have to format it. 
                 const balance = (formatUnits(roundData[1], 8))
                 setCeloValue(balance)
                 // Do something with roundData
@@ -372,16 +516,14 @@ export default function Home() {
             {isConnected ? (
                 <div className="h2 text-center">
                     Your address: {userAddress}
+                     {/* add your values here, we will shorten it to two decimal values */}
                     <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
                     <p> USD value of CELO {(Number(celoBalance) * Number(celoValue)).toFixed(2)}</p>
                 </div>
-
             ) : (
                 <div>No Wallet Connected</div>
             )}
         </div>
     );
 }
-
-
 ```

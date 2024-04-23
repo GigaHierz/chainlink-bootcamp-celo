@@ -65,7 +65,8 @@ export default function Home() {
     const [userAddress, setUserAddress] = useState("");
     const [isMounted, setIsMounted] = useState(false);
     const [celoBalance, setCeloBalance] = useState("");
-    const [celoValue, setCeloValue] = useState("");
+       // store the celoValue in the state
+       const [celoValue, setCeloValue] = useState("");
 
     const { address, isConnected } = useAccount();
 
@@ -113,6 +114,9 @@ export default function Home() {
             })
     };
 
+
+ 
+
     return (
         <div className="flex flex-col justify-center items-center">
             <div className="h1">
@@ -121,6 +125,7 @@ export default function Home() {
             {isConnected ? (
                 <div className="h2 text-center">
                     Your address: {userAddress}
+                      {/* add your values here, we will shorten it to two decimal values */}
                     <p> CELO Balance {Number(celoBalance).toFixed(2)}</p>
                     <p> USD value of CELO {(Number(celoBalance) * Number(celoValue)).toFixed(2)}</p>
                 </div>
