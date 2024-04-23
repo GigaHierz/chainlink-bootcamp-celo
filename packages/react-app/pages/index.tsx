@@ -59,8 +59,8 @@ export default function Home() {
         },
     ]
     const web3 = new Web3("https://alfajores-forno.celo-testnet.org")
-    const priceFeed = new web3.eth.Contract(aggregatorV3InterfaceABI, celoToUsd)
     const celoContract = new web3.eth.Contract(erc20Abi, CELOTokenAddress)
+    const priceFeed = new web3.eth.Contract(aggregatorV3InterfaceABI, celoToUsd)
 
     const [userAddress, setUserAddress] = useState("");
     const [isMounted, setIsMounted] = useState(false);
@@ -84,50 +84,34 @@ export default function Home() {
         }
     }, [address, isConnected, isMounted]);
 
-
-
     if (!isMounted) {
         return null;
     }
 
-
-
     const getBalance = async () => {
-        let response = ''
-
         celoContract.methods.balanceOf(userAddress as `0x${string}`).call()
             .then(balance => {
                 // Balance is returned in Wei, convert it to Ether (or token's equivalent)
                 const tokenBalance = web3.utils.fromWei(balance, 'ether');
-                response = tokenBalance
-                setCeloBalance((response))
+                setCeloBalance((tokenBalance))
                 console.log(`The balance is: ${tokenBalance}`);
             })
             .catch(error => {
                 console.error(error);
             });
-
-        return;
     };
 
     const getUSDValue = async () => {
-        let response = {} as any
-        await priceFeed.methods
+        priceFeed.methods
             .latestRoundData()
             .call()
             .then((roundData: any) => {
+                const balance = (formatUnits(roundData[1], 8))
+                setCeloValue(balance)
                 // Do something with roundData
-                response = roundData;
                 console.log("Latest Round Data", roundData)
             })
-
-        const balance = (formatUnits(response[1], 8))
-        setCeloValue(balance)
-        return;
     };
-
-
-
 
     return (
         <div className="flex flex-col justify-center items-center">
