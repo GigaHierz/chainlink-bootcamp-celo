@@ -32,19 +32,21 @@ or
 yarn
 ```
 
-now to run the frontend, you can find the command in the package.json file under scripts:
+now to run the frontend, you can find the command in the `package.json` file under scripts:
 
 ```bash
 npm run react-app:dev
 ```
 
-your frontend should now be running on localhost:3000
+your frontend should now be running on `http://localhost:3000`.
 
 ## Get token Balance
 
+To read the balance of CELO tokens, we need to first get some, so head over to the [Celo Faucet](https://faucet.celo.org/alfajores) to get some in your wallet. We always recommend to use a specific wallet for development, that doesn't hold any real funds. 
+
 In the `index.tsx` file in the `react-app` folder, you will find some template code. We will add our code in there. 
 
-First we want to read the balance of CELO tokens.
+First we want to read the balance of CELO tokens. 
 
 
 1. For that we will need to get the address of CELO on Alfajores. You can find the addresses in the [Celo docs](https://docs.celo.org/token-addresses). Or when you check top ERC20 tokens in the [celoscan](https://celoscan.io/tokens).
