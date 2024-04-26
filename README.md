@@ -15,6 +15,11 @@ npx @celo/celo-composer@latest create
 
 ### Install all dependencies
 
+open the project in your favorite code editor.
+
+open a new terminal and run
+
+
 run
 
 ```bash
@@ -27,14 +32,19 @@ or
 yarn
 ```
 
+now to run the frontend, you can find the command in the package.json file under scripts:
+
+```bash
+npm run react-app:dev
+```
+
+your frontend should now be running on localhost:3000
+
 ## Get token Balance
 
-In the `index.tsx` file, you will find some template code. We will add our code in there. 
+In the `index.tsx` file in the `react-app` folder, you will find some template code. We will add our code in there. 
 
 First we want to read the balance of CELO tokens.
-
-
-
 
 
 1. For that we will need to get the address of CELO on Alfajores. You can find the addresses in the [Celo docs](https://docs.celo.org/token-addresses). Or when you check top ERC20 tokens in the [celoscan](https://celoscan.io/tokens).
