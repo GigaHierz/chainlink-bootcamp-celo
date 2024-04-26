@@ -7,6 +7,8 @@ Find the slides here:
 
 ## Install Celo-Composer 
 
+We will use [Celo-Composer]((https://github.com/celo-org/celo-composer)), a starterkit, that helps you set up a dApp in a few minutes. This is perfect for hackathons or if you want to test out a new protocol. 
+
 The easiest way to start with Celo Composer is using [`@celo/celo-composer`](https://github.com/celo-org/celo-composer). This CLI tool lets you quickly start building dApps on Celo for multiple frameworks, including React (with either react-celo or rainbowkit-celo). To get started, just run the following command, and follow the steps:
 
 ```bash
